@@ -1,0 +1,97 @@
+@page "/"
+@attribute [Authorize]
+@inject Hr360ApiClient Api
+
+<PageTitle>HR 360 Dashboard</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Row="true" AlignItems="AlignItems.Center">
+        <div>
+            <MudText Typo="Typo.h5">My reviews</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Assigned peer feedback for @userName.</MudText>
+        </div>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="LoadAsync" StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton>
+    </MudStack>
+
+    @if (loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <MudAlert Severity="Severity.Error">@error</MudAlert>
+    }
+    else if (assignments.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No reviews are assigned to this identity.</MudAlert>
+    }
+    else
+    {
+        <MudTable Items="assignments" Hover="true" Dense="true">
+            <HeaderContent>
+                <MudTh>Cycle</MudTh>
+                <MudTh>Reviewee</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Cycle">@context.CycleName</MudTd>
+                <MudTd DataLabel="Reviewee">@context.RevieweeName</MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Action">
+                    <MudButton Href="@($"feedback/{context.Id}")" Disabled="@(context.Status == AssignmentStatus.Submitted)" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">
+                        Open
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private List<ReviewAssignmentDto> assignments = [];
+    private bool loading;
+    private string? error;
+    private string userName = "you";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateTask is not null)
+        {
+            var state = await AuthenticationStateTask;
+            userName = state.User.Identity?.Name ?? "you";
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            assignments = (await Api.GetMyAssignmentsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private static Color StatusColor(AssignmentStatus status) => status switch
+    {
+        AssignmentStatus.Submitted => Color.Success,
+        AssignmentStatus.Draft => Color.Warning,
+        _ => Color.Default
+    };
+}

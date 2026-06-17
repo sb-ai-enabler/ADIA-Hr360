@@ -1,0 +1,163 @@
+@page "/admin"
+@attribute [Authorize(Roles = "HRAdmin,SystemAdmin")]
+@inject Hr360ApiClient Api
+@inject ISnackbar Snackbar
+
+<PageTitle>HR 360 Admin</PageTitle>
+
+<MudStack Spacing="3">
+    <MudStack Row="true" AlignItems="AlignItems.Center">
+        <div>
+            <MudText Typo="Typo.h5">Admin workspace</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Templates, review cycles, assignments, and reporting.</MudText>
+        </div>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" OnClick="LoadAsync" StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton>
+    </MudStack>
+
+    @if (loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <MudAlert Severity="Severity.Error">@error</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">Templates</MudText>
+                    <MudText Typo="Typo.h4">@templates.Count</MudText>
+                    <MudButton Class="mt-3" FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateTemplateAsync" StartIcon="@Icons.Material.Filled.Add">
+                        Create default
+                    </MudButton>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">Employees</MudText>
+                    <MudText Typo="Typo.h4">@employees.Count</MudText>
+                    <MudButton Class="mt-3" FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(templates.Count == 0 || employees.Count < 2)" OnClick="CreateCycleAsync" StartIcon="@Icons.Material.Filled.PlayArrow">
+                        Start cycle
+                    </MudButton>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Outlined="true">
+                    <MudText Typo="Typo.subtitle1">Completion</MudText>
+                    <MudText Typo="Typo.h4">@(report?.CompletionRate ?? 0)%</MudText>
+                    <MudText Typo="Typo.caption">@((report?.SubmittedAssignments ?? 0)) of @((report?.TotalAssignments ?? 0)) submitted</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Cycles</MudText>
+            <MudTable Items="cycles" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Window</MudTh>
+                    <MudTh>Assignments</MudTh>
+                    <MudTh>Submitted</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.Name</MudTd>
+                    <MudTd>@context.Status</MudTd>
+                    <MudTd>@context.StartsOn to @context.EndsOn</MudTd>
+                    <MudTd>@context.AssignmentCount</MudTd>
+                    <MudTd>@context.SubmittedCount</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudText Typo="Typo.subtitle1" Class="mb-2">Reporting</MudText>
+            <MudTable Items="report?.Cycles ?? []" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>Cycle</MudTh>
+                    <MudTh>Completion</MudTh>
+                    <MudTh>Suppression</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.CycleName</MudTd>
+                    <MudTd>@context.CompletionRate%</MudTd>
+                    <MudTd>@(context.IsSuppressed ? "Suppressed below anonymity threshold" : "Available")</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+    private List<EmployeeDto> employees = [];
+    private List<ReviewTemplateDto> templates = [];
+    private List<ReviewCycleDto> cycles = [];
+    private ReportingSummaryDto? report;
+    private bool loading;
+    private string? error;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            employees = (await Api.GetEmployeesAsync()).ToList();
+            templates = (await Api.GetTemplatesAsync()).ToList();
+            cycles = (await Api.GetCyclesAsync()).ToList();
+            report = await Api.GetReportingSummaryAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task CreateTemplateAsync()
+    {
+        var request = new CreateTemplateRequest(
+            $"Leadership feedback {DateTime.Now:HHmm}",
+            "Reusable 360 template covering impact, collaboration, and growth.",
+            new TemplateDefinitionDto([
+                new TemplateSectionDto("impact", "Impact", [
+                    new QuestionDto("impact-rating", "Rate this person's impact this cycle.", QuestionType.Rating, true, 1, 5, null),
+                    new QuestionDto("impact-example", "Share one concrete example of impact.", QuestionType.FreeText, true, null, null, null)
+                ]),
+                new TemplateSectionDto("growth", "Growth", [
+                    new QuestionDto("growth-text", "What should this person continue or improve?", QuestionType.FreeText, false, null, null, null),
+                    new QuestionDto("recommend", "Would you recommend this person for broader responsibility?", QuestionType.YesNo, false, null, null, null)
+                ])
+            ]));
+
+        await Api.CreateTemplateAsync(request);
+        Snackbar.Add("Template created.", Severity.Success);
+        await LoadAsync();
+    }
+
+    private async Task CreateCycleAsync()
+    {
+        var template = templates.First();
+        var ids = employees.Select(e => e.Id).ToArray();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var request = new CreateCycleRequest(
+            $"360 cycle {DateTime.Now:MMM d}",
+            template.Id,
+            today.AddDays(-1),
+            today.AddDays(21),
+            ids,
+            ids);
+
+        await Api.CreateCycleAsync(request);
+        Snackbar.Add("Review cycle started.", Severity.Success);
+        await LoadAsync();
+    }
+}

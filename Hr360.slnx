@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Database/">
+    <Project Path="src/Hr360.Database/Hr360.Database.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Hr360.Shared/Hr360.Shared.csproj" />
+  </Folder>
+  <Folder Name="/src/Client/">
+    <Project Path="src/Hr360.Client/Hr360.Client.csproj" />
+  </Folder>
+  <Folder Name="/src/Server/">
+    <Project Path="src/Hr360.Api/Hr360.Api.csproj" />
+    <Project Path="src/Hr360.Application/Hr360.Application.csproj" />
+    <Project Path="src/Hr360.Domain/Hr360.Domain.csproj" />
+    <Project Path="src/Hr360.Infrastructure/Hr360.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Hr360.IntegrationTests/Hr360.IntegrationTests.csproj" />
+    <Project Path="tests/Hr360.UnitTests/Hr360.UnitTests.csproj" />
+  </Folder>
+</Solution>

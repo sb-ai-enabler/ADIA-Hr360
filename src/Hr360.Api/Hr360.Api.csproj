@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>hr360-api-secrets</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <PackageReference Include="NWebsec.AspNetCore.Middleware" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Hr360.Application\Hr360.Application.csproj" />
+    <ProjectReference Include="..\Hr360.Infrastructure\Hr360.Infrastructure.csproj" />
+    <ProjectReference Include="..\Hr360.Shared\Hr360.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

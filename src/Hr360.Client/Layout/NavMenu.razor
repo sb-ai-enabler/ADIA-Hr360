@@ -1,0 +1,6 @@
+<MudNavMenu Class="pa-2">
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+    <AuthorizeView Roles="HRAdmin,SystemAdmin">
+        <MudNavLink Href="admin" Icon="@Icons.Material.Filled.AdminPanelSettings">Admin</MudNavLink>
+    </AuthorizeView>
+</MudNavMenu>

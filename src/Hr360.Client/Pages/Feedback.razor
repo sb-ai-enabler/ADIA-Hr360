@@ -1,0 +1,148 @@
+@page "/feedback/{AssignmentId:guid}"
+@attribute [Authorize]
+@inject Hr360ApiClient Api
+@inject LocalDraftStore DraftStore
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Submit Feedback</PageTitle>
+
+@if (loading)
+{
+    <MudProgressLinear Indeterminate="true" />
+}
+else if (!string.IsNullOrWhiteSpace(error))
+{
+    <MudAlert Severity="Severity.Error">@error</MudAlert>
+}
+else if (form is not null)
+{
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <div>
+                <MudText Typo="Typo.h5">Feedback for @form.Assignment.RevieweeName</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@form.Assignment.CycleName</MudText>
+            </div>
+            <MudSpacer />
+            <MudChip T="string" Color="Color.Info" Size="Size.Small">@syncState</MudChip>
+        </MudStack>
+
+        @foreach (var section in form.Definition.Sections)
+        {
+            <MudPaper Class="pa-4" Outlined="true">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">@(section.Title)</MudText>
+                <MudStack Spacing="3">
+                    @foreach (var question in section.Questions)
+                    {
+                        var model = Answers[question.Id];
+                        <div>
+                            <MudText Typo="Typo.body2">@question.Prompt @(question.Required ? "*" : "")</MudText>
+                            @if (question.Type == QuestionType.Rating)
+                            {
+                                <MudNumericField T="int?" Min="question.MinRating" Max="question.MaxRating" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="model.Rating" />
+                            }
+                            else if (question.Type == QuestionType.YesNo)
+                            {
+                                <MudSwitch T="bool" Color="Color.Primary" @bind-Value="model.YesNo">Yes</MudSwitch>
+                            }
+                            else
+                            {
+                                <MudTextField T="string" Lines="4" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="model.Text" />
+                            }
+                        </div>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+            <MudButton Variant="Variant.Outlined" OnClick="SaveDraftAsync" StartIcon="@Icons.Material.Filled.Save">Save draft</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitAsync" StartIcon="@Icons.Material.Filled.Send">Submit</MudButton>
+        </MudStack>
+    </MudStack>
+}
+
+@code {
+    [Parameter] public Guid AssignmentId { get; set; }
+
+    private AssignmentFormDto? form;
+    private Dictionary<string, AnswerModel> Answers { get; } = [];
+    private bool loading = true;
+    private string? error;
+    private string syncState = "Loaded";
+    private string submissionKey = Guid.NewGuid().ToString("N");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            submissionKey = Guid.NewGuid().ToString("N");
+            form = await Api.GetAssignmentFormAsync(AssignmentId);
+            foreach (var question in form.Definition.Sections.SelectMany(s => s.Questions))
+            {
+                Answers[question.Id] = new AnswerModel { QuestionId = question.Id };
+            }
+
+            foreach (var answer in await DraftStore.LoadAsync(AssignmentId))
+            {
+                if (Answers.TryGetValue(answer.QuestionId, out var model))
+                {
+                    model.Rating = answer.Rating;
+                    model.Text = answer.Text;
+                    model.YesNo = answer.YesNo ?? false;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task SaveDraftAsync()
+    {
+        var answers = ToAnswers();
+        await DraftStore.SaveAsync(AssignmentId, answers);
+        syncState = "Saved locally";
+
+        try
+        {
+            await Api.SaveDraftAsync(new SaveDraftRequest(AssignmentId, answers, Guid.NewGuid().ToString("N")));
+            syncState = "Synced";
+            Snackbar.Add("Draft saved.", Severity.Success);
+        }
+        catch
+        {
+            syncState = "Saved locally";
+            Snackbar.Add("Draft saved locally. It can be synced when connectivity returns.", Severity.Warning);
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        var answers = ToAnswers();
+        await DraftStore.SaveAsync(AssignmentId, answers);
+        syncState = "Syncing";
+        await Api.SubmitFeedbackAsync(new SubmitFeedbackRequest(AssignmentId, answers, submissionKey));
+        await DraftStore.ClearAsync(AssignmentId);
+        Snackbar.Add("Feedback submitted.", Severity.Success);
+        Navigation.NavigateTo("/");
+    }
+
+    private IReadOnlyList<AnswerDto> ToAnswers() =>
+        Answers.Values
+            .Select(a => new AnswerDto(a.QuestionId, a.Rating, a.Text, a.YesNo))
+            .ToList();
+
+    private sealed class AnswerModel
+    {
+        public string QuestionId { get; init; } = string.Empty;
+        public int? Rating { get; set; }
+        public string? Text { get; set; }
+        public bool YesNo { get; set; }
+    }
+}
