@@ -1,14 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+
 namespace Hr360.Domain;
 
-public sealed class FeedbackSubmission
+public partial class FeedbackSubmission
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; }
+
     public Guid AssignmentId { get; set; }
-    public ReviewAssignment? Assignment { get; set; }
-    public string AnswersJson { get; set; } = "[]";
+
+    public string AnswersJson { get; set; } = null!;
+
     public bool IsFinal { get; set; }
-    public string IdempotencyKey { get; set; } = string.Empty;
+
+    public string IdempotencyKey { get; set; } = null!;
+
     public string? ClientDraftId { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
     public DateTimeOffset? SubmittedAt { get; set; }
+
+    public virtual ReviewAssignment Assignment { get; set; } = null!;
 }

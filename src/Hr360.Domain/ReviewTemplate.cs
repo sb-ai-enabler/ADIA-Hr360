@@ -1,13 +1,25 @@
+﻿using System;
+using System.Collections.Generic;
+
 namespace Hr360.Domain;
 
-public sealed class ReviewTemplate
+public partial class ReviewTemplate
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public int Version { get; set; } = 1;
-    public string DefinitionJson { get; set; } = "{}";
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public string Description { get; set; } = null!;
+
+    public int Version { get; set; }
+
+    public string DefinitionJson { get; set; } = null!;
+
     public bool IsArchived { get; set; }
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public string CreatedBy { get; set; } = string.Empty;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = null!;
+
+    public virtual ICollection<ReviewCycle> ReviewCycles { get; set; } = new List<ReviewCycle>();
 }

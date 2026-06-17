@@ -1,18 +1,31 @@
-using Hr360.Shared;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Hr360.Domain;
 
-public sealed class ReviewCycle
+public partial class ReviewCycle
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
     public Guid TemplateId { get; set; }
+
     public int TemplateVersion { get; set; }
-    public string TemplateSnapshotJson { get; set; } = "{}";
-    public ReviewCycleStatus Status { get; set; } = ReviewCycleStatus.Draft;
+
+    public string TemplateSnapshotJson { get; set; } = null!;
+
+    public int Status { get; set; }
+
     public DateOnly StartsOn { get; set; }
+
     public DateOnly EndsOn { get; set; }
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public string CreatedBy { get; set; } = string.Empty;
-    public List<ReviewAssignment> Assignments { get; set; } = [];
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public string CreatedBy { get; set; } = null!;
+
+    public virtual ICollection<ReviewAssignment> ReviewAssignments { get; set; } = new List<ReviewAssignment>();
+
+    public virtual ReviewTemplate Template { get; set; } = null!;
 }

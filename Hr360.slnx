@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/Database/">
-    <Project Path="src/Hr360.Database/Hr360.Database.csproj" />
+    <Project Path="src/Hr360.SqlDatabase.EF.Console/Hr360.SqlDatabase.EF.Console.csproj" Id="ec29fe94-2d7b-4402-a4ca-8493e50230be" />
+    <Project Path="src/Hr360.SqlDatabase/Hr360.SqlDatabase.sqlproj" Id="29e13984-320e-413c-ab1f-326adcc706dd">
+      <Build />
+      <Deploy />
+    </Project>
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Hr360.Shared/Hr360.Shared.csproj" />

@@ -3,16 +3,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>Hr360.Database</Name>
+    <Name>Hr360.SqlDatabase</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
-    <ProjectGuid>{5faed626-33c9-4391-a92b-9ace2ba6ab44}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql170DatabaseSchemaProvider</DSP>
+    <ProjectGuid>{29e13984-320e-413c-ab1f-326adcc706dd}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
-    <RootNamespace>Hr360.Database</RootNamespace>
-    <AssemblyName>Hr360.Database</AssemblyName>
+    <RootNamespace>Hr360.SqlDatabase</RootNamespace>
+    <AssemblyName>Hr360.SqlDatabase</AssemblyName>
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
@@ -56,6 +56,14 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
-    <Folder Include="NewFolder1\" />
+    <Folder Include="Tables" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="Tables\AuditEvents.sql" />
+    <Build Include="Tables\Employees.sql" />
+    <Build Include="Tables\FeedbackSubmissions.sql" />
+    <Build Include="Tables\ReviewAssignments.sql" />
+    <Build Include="Tables\ReviewCycles.sql" />
+    <Build Include="Tables\ReviewTemplates.sql" />
   </ItemGroup>
 </Project>

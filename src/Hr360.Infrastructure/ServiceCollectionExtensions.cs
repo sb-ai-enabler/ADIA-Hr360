@@ -30,10 +30,17 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContext<Hr360DbContext>(options =>
         {
-            options.UseSqlServer(connectionString, sql =>
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
-                sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
-            });
+                options.UseInMemoryDatabase("Hr360Development");
+            }
+            else
+            {
+                options.UseSqlServer(connectionString, sql =>
+                {
+                    sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                });
+            }
         });
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();

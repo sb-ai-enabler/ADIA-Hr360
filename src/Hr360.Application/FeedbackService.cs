@@ -47,7 +47,7 @@ public sealed class FeedbackService(
             existing.UpdatedAt = DateTimeOffset.UtcNow;
         }
 
-        assignment.Status = AssignmentStatus.Draft;
+        assignment.Status = (int)AssignmentStatus.Draft;
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
@@ -77,7 +77,7 @@ public sealed class FeedbackService(
             SubmittedAt = DateTimeOffset.UtcNow
         });
 
-        assignment.Status = AssignmentStatus.Submitted;
+        assignment.Status = (int)AssignmentStatus.Submitted;
         assignment.SubmittedAt = DateTimeOffset.UtcNow;
 
         auditEvents.Add(new AuditEvent
@@ -101,7 +101,7 @@ public sealed class FeedbackService(
             throw new UnauthorizedAccessException("You can only submit your assigned reviews.");
         }
 
-        if (assignment.Cycle?.Status != ReviewCycleStatus.Active)
+        if (assignment.Cycle?.Status != (int)ReviewCycleStatus.Active)
         {
             throw new InvalidOperationException("This review cycle is not active.");
         }
@@ -112,7 +112,7 @@ public sealed class FeedbackService(
             throw new InvalidOperationException("This review cycle is outside its submission window.");
         }
 
-        if (!allowSubmitted && assignment.Status == AssignmentStatus.Submitted)
+        if (!allowSubmitted && assignment.Status ==(int) AssignmentStatus.Submitted)
         {
             throw new InvalidOperationException("Feedback has already been submitted.");
         }

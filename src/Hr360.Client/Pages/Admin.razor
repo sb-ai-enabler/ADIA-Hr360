@@ -88,6 +88,94 @@
                 </RowTemplate>
             </MudTable>
         </MudPaper>
+
+        @if (report?.Cycles.SelectMany(c => c.Reviewees).Any() == true)
+        {
+            <MudPaper Class="pa-4" Outlined="true">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Anonymized results</MudText>
+
+                @foreach (var cycleReport in report.Cycles)
+                {
+                    if (cycleReport.Reviewees.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    <MudText Typo="Typo.subtitle2" Class="mt-3">@cycleReport.CycleName</MudText>
+
+                    @foreach (var reviewee in cycleReport.Reviewees)
+                    {
+                        <MudPaper Class="pa-3 my-2" Outlined="true">
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudText Typo="Typo.body1">@reviewee.RevieweeName</MudText>
+                                <MudSpacer />
+                                <MudChip T="string" Size="Size.Small" Color="@(reviewee.IsSuppressed ? Color.Warning : Color.Success)">
+                                    @reviewee.SubmittedCount submissions
+                                </MudChip>
+                            </MudStack>
+
+                            @if (reviewee.IsSuppressed)
+                            {
+                                <MudAlert Class="mt-2" Severity="Severity.Warning">
+                                    Results are suppressed until at least three reviewers have submitted feedback for this person.
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                @if (reviewee.RatingQuestions.Count > 0)
+                                {
+                                    <MudText Typo="Typo.caption" Class="mt-3">Ratings</MudText>
+                                    <MudTable Items="reviewee.RatingQuestions" Dense="true">
+                                        <HeaderContent>
+                                            <MudTh>Question</MudTh>
+                                            <MudTh>Average</MudTh>
+                                            <MudTh>Range</MudTh>
+                                            <MudTh>Responses</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd>@context.Prompt</MudTd>
+                                            <MudTd>@context.Average</MudTd>
+                                            <MudTd>@context.Minimum - @context.Maximum</MudTd>
+                                            <MudTd>@context.ResponseCount</MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+
+                                @if (reviewee.YesNoQuestions.Count > 0)
+                                {
+                                    <MudText Typo="Typo.caption" Class="mt-3">Yes / no</MudText>
+                                    <MudTable Items="reviewee.YesNoQuestions" Dense="true">
+                                        <HeaderContent>
+                                            <MudTh>Question</MudTh>
+                                            <MudTh>Yes</MudTh>
+                                            <MudTh>No</MudTh>
+                                            <MudTh>Yes %</MudTh>
+                                        </HeaderContent>
+                                        <RowTemplate>
+                                            <MudTd>@context.Prompt</MudTd>
+                                            <MudTd>@context.YesCount</MudTd>
+                                            <MudTd>@context.NoCount</MudTd>
+                                            <MudTd>@context.YesPercentage%</MudTd>
+                                        </RowTemplate>
+                                    </MudTable>
+                                }
+
+                                @foreach (var textQuestion in reviewee.TextQuestions.Where(q => q.ResponseCount > 0))
+                                {
+                                    <MudText Typo="Typo.caption" Class="mt-3">@textQuestion.Prompt</MudText>
+                                    <MudList T="string" Dense="true">
+                                        @foreach (var comment in textQuestion.Comments)
+                                        {
+                                            <MudListItem T="string">@comment</MudListItem>
+                                        }
+                                    </MudList>
+                                }
+                            }
+                        </MudPaper>
+                    }
+                }
+            </MudPaper>
+        }
     }
 </MudStack>
 

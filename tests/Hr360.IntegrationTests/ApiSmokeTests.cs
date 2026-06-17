@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
+using Hr360.Domain;
+using Hr360.Infrastructure;
 using Hr360.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
@@ -10,7 +12,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 
 namespace Hr360.IntegrationTests;
 
@@ -53,12 +54,46 @@ public sealed class TestApiFactory : WebApplicationFactory<Program>
         // then replace the authentication scheme with a deterministic test handler.
         builder.UseSetting("Authentication:Authority", "https://login.test/");
         builder.UseSetting("Authentication:Audience", "api://hr360-api");
+        builder.UseSetting("ConnectionStrings:Hr360", "");
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddAuthentication(TestAuthHandler.SchemeName)
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                    options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                    options.DefaultScheme = TestAuthHandler.SchemeName;
+                })
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+
+            using var provider = services.BuildServiceProvider();
+            using var scope = provider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<Hr360DbContext>();
+            db.Database.EnsureDeleted();
+            db.Database.EnsureCreated();
+            SeedDatabase(db);
         });
+    }
+
+    private static void SeedDatabase(Hr360DbContext db)
+    {
+        db.Employees.AddRange(
+            new Employee { EntraObjectId = "demo.admin", DisplayName = "Demo Admin", Email = "admin@example.com" },
+            new Employee { EntraObjectId = "demo.alex", DisplayName = "Alex", Email = "alex@example.com" },
+            new Employee { EntraObjectId = "demo.sam", DisplayName = "Sam", Email = "sam@example.com" },
+            new Employee { EntraObjectId = "demo.taylor", DisplayName = "Taylor", Email = "taylor@example.com" });
+
+        db.Templates.Add(new ReviewTemplate
+        {
+            Name = "Core 360",
+            Description = "Seeded review template for integration tests.",
+            DefinitionJson = """
+                {"sections":[{"id":"impact","title":"Impact","questions":[{"id":"impact-rating","prompt":"Rate impact.","type":1,"required":true,"minRating":1,"maxRating":5,"helpText":null}]}]}
+                """,
+            CreatedBy = "demo.admin"
+        });
+
+        db.SaveChanges();
     }
 }
 

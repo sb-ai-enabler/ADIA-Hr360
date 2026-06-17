@@ -56,7 +56,7 @@ public sealed class ReviewCycleService(
             TemplateId = template.Id,
             TemplateVersion = template.Version,
             TemplateSnapshotJson = template.DefinitionJson,
-            Status = ReviewCycleStatus.Active,
+            Status = (int)ReviewCycleStatus.Active,
             StartsOn = request.StartsOn,
             EndsOn = request.EndsOn,
             CreatedBy = currentUser.UserId
@@ -71,7 +71,7 @@ public sealed class ReviewCycleService(
                     continue;
                 }
 
-                cycle.Assignments.Add(new ReviewAssignment
+                cycle.ReviewAssignments.Add(new ReviewAssignment
                 {
                     CycleId = cycle.Id,
                     RevieweeId = revieweeId,
@@ -80,7 +80,7 @@ public sealed class ReviewCycleService(
             }
         }
 
-        if (cycle.Assignments.Count == 0)
+        if (cycle.ReviewAssignments.Count == 0)
         {
             throw new InvalidOperationException("The cycle did not create any peer review assignments.");
         }

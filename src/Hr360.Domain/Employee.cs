@@ -1,11 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+
 namespace Hr360.Domain;
 
-public sealed class Employee
+public partial class Employee
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string EntraObjectId { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public Guid Id { get; set; }
+
+    public string EntraObjectId { get; set; } = null!;
+
+    public string DisplayName { get; set; } = null!;
+
+    public string Email { get; set; } = null!;
+
     public string? Department { get; set; }
-    public bool IsActive { get; set; } = true;
+
+    public bool IsActive { get; set; }
+
+    public virtual ICollection<ReviewAssignment> ReviewAssignmentReviewees { get; set; } = new List<ReviewAssignment>();
+
+    public virtual ICollection<ReviewAssignment> ReviewAssignmentReviewers { get; set; } = new List<ReviewAssignment>();
 }

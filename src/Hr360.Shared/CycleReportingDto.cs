@@ -6,4 +6,5 @@ public sealed record CycleReportingDto(
     int AssignmentCount,
     int SubmittedCount,
     decimal CompletionRate,
-    bool IsSuppressed);
+    bool IsSuppressed,
+    IReadOnlyList<RevieweeReportingDto> Reviewees);

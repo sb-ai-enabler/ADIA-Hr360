@@ -17,6 +17,9 @@ internal static class Mapping
     public static string WriteAnswers(IReadOnlyList<AnswerDto> answers) =>
         JsonSerializer.Serialize(answers, JsonOptions);
 
+    public static IReadOnlyList<AnswerDto> ReadAnswers(string json) =>
+        JsonSerializer.Deserialize<IReadOnlyList<AnswerDto>>(json, JsonOptions) ?? [];
+
     public static ReviewTemplateDto ToDto(this ReviewTemplate template) =>
         new(
             template.Id,
@@ -38,15 +41,15 @@ internal static class Mapping
 
     public static ReviewCycleDto ToDto(this ReviewCycle cycle)
     {
-        var assignmentCount = cycle.Assignments.Count;
-        var submittedCount = cycle.Assignments.Count(a => a.Status == AssignmentStatus.Submitted);
+        var assignmentCount = cycle.ReviewAssignments.Count;
+        var submittedCount = cycle.ReviewAssignments.Count(a => a.Status == (int)AssignmentStatus.Submitted);
 
         return new ReviewCycleDto(
             cycle.Id,
             cycle.Name,
             cycle.TemplateId,
             cycle.TemplateVersion,
-            cycle.Status,
+            (ReviewCycleStatus)cycle.Status,
             cycle.StartsOn,
             cycle.EndsOn,
             assignmentCount,
@@ -62,6 +65,6 @@ internal static class Mapping
             assignment.Reviewee?.DisplayName ?? string.Empty,
             assignment.ReviewerId,
             assignment.Reviewer?.DisplayName ?? string.Empty,
-            assignment.Status,
+            (AssignmentStatus)assignment.Status,
             assignment.SubmittedAt);
 }
